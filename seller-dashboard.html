@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard • ProxyMarket</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .font-display { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; }
+        
+        .metric-card { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s; }
+        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+        
+        .nav-active { background-color: #27251f; color: white; border-radius: 1rem; }
+        
+        .health-bar { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .web3-button { transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1); }
+        .web3-button:hover { transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        
+        .status-pill { font-size: 0.75rem; padding: 0.125rem 0.75rem; border-radius: 9999px; font-weight: 500; }
+        
+        .wallet-connected { background: linear-gradient(90deg, #166534, #052e16); }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-200">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
+            <div class="p-6">
+                <div class="flex items-center gap-x-3 mb-10">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                        <i class="fa-solid fa-robot text-white text-3xl"></i>
+                    </div>
+                    <div>
+                        <div class="font-display font-semibold text-2xl tracking-tighter">ProxyMarket</div>
+                        <div class="text-[10px] text-emerald-400 tracking-[2px] -mt-1 font-medium">DECENTRALIZED AI</div>
+                    </div>
+                </div>
+                
+                <nav class="space-y-1 text-sm">
+                    <a href="#" class="flex items-center gap-x-3 px-4 py-3 nav-active text-white"><i class="fa-solid fa-chart-line w-5"></i><span class="font-medium">Dashboard</span></a>
+                    <a href="#" class="flex items-center gap-x-3 px-4 py-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-2xl transition-colors"><i class="fa-solid fa-key w-5"></i><span class="font-medium">My Keys</span></a>
+                    <a href="#" class="flex items-center gap-x-3 px-4 py-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-2xl transition-colors"><i class="fa-solid fa-wallet w-5"></i><span class="font-medium">Earnings</span></a>
+                    <a href="#" class="flex items-center gap-x-3 px-4 py-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-2xl transition-colors"><i class="fa-solid fa-shield-halved w-5"></i><span class="font-medium">Collateral</span></a>
+                </nav>
+            </div>
+            
+            <div class="mt-auto p-6 border-t border-zinc-800">
+                <!-- Wallet Status in Sidebar -->
+                <div id="sidebar-wallet" class="px-4 py-3 bg-zinc-800 rounded-2xl text-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs text-zinc-400">Wallet</div>
+                        <div id="sidebar-network" class="text-[10px] px-2 py-0.5 bg-emerald-900 text-emerald-400 rounded font-mono">Arbitrum</div>
+                    </div>
+                    <div id="sidebar-address" class="font-mono text-xs mt-1 text-emerald-400 truncate">Not connected</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="border-b border-zinc-800 px-8 py-5 bg-zinc-900/60 backdrop-blur-xl flex items-center justify-between">
+                <div>
+                    <div class="font-display text-3xl font-semibold tracking-tighter">Seller Dashboard</div>
+                    <div class="text-zinc-400 text-sm mt-0.5">Real-time proxy performance & earnings</div>
+                </div>
+                
+                <div class="flex items-center gap-x-3">
+                    <!-- Wallet Connect Button -->
+                    <div id="wallet-section">
+                        <button id="connect-wallet-btn" onclick="connectWallet()"
+                                class="web3-button flex items-center gap-x-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold rounded-2xl text-sm transition-all">
+                            <i class="fa-solid fa-wallet"></i>
+                            <span>Connect Wallet</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="flex items-center gap-x-2 px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-2xl text-sm">
+                        <div class="flex items-center gap-x-1.5">
+                            <div class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                            <span class="font-medium text-emerald-400">4 keys healthy</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="withdrawFunds()" 
+                            class="web3-button flex items-center gap-x-2 px-6 py-2.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-semibold rounded-2xl text-sm transition-all">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                        <span>Withdraw</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-auto p-8">
+                <div class="max-w-[1200px] mx-auto">
+                    
+                    <!-- Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="metric-card bg-zinc-900 border border-zinc-800 rounded-3xl p-7">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center gap-x-2 text-sm text-zinc-400"><i class="fa-solid fa-coins"></i><span>Total Earned</span></div>
+                                    <div id="total-earned" class="font-display text-5xl font-semibold tracking-tighter mt-3 tabular-nums">$12,847.32</div>
+                                </div>
+                                <i class="fa-solid fa-wallet text-emerald-400 text-4xl"></i>
+                            </div>
+                            <div class="mt-6"><span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-medium rounded-full">+ $1,240 this week</span></div>
+                        </div>
+
+                        <div class="metric-card bg-zinc-900 border border-zinc-800 rounded-3xl p-7">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center gap-x-2 text-sm text-zinc-400"><i class="fa-solid fa-key"></i><span>Active Keys</span></div>
+                                    <div class="font-display text-5xl font-semibold tracking-tighter mt-3 tabular-nums">4 <span class="text-4xl text-zinc-400">/ 6</span></div>
+                                </div>
+                                <i class="fa-solid fa-key text-sky-400 text-4xl"></i>
+                            </div>
+                            <div class="mt-6 text-xs"><span class="text-emerald-400 font-medium">87% avg health</span> • 2 in cooldown</div>
+                        </div>
+
+                        <div class="metric-card bg-zinc-900 border border-zinc-800 rounded-3xl p-7">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <div class="flex items-center gap-x-2 text-sm text-zinc-400"><i class="fa-solid fa-tachometer-alt"></i><span>Real-time Bandwidth</span></div>
+                                    <div id="bandwidth-value" class="font-display text-5xl font-semibold tracking-tighter mt-1 tabular-nums">184.7</div>
+                                    <div class="text-xs text-zinc-400">tokens / sec</div>
+                                </div>
+                                <i class="fa-solid fa-tachometer-alt text-violet-400 text-4xl"></i>
+                            </div>
+                            <div class="h-2.5 bg-zinc-800 rounded-full overflow-hidden"><div id="bandwidth-bar" class="h-2.5 bg-gradient-to-r from-violet-400 to-fuchsia-400 rounded-full" style="width: 68%"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Active Keys Table -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden mb-8">
+                        <div class="px-7 py-5 border-b border-zinc-800 flex items-center justify-between">
+                            <div><div class="font-semibold text-xl tracking-tight">Active Keys</div><div class="text-xs text-zinc-400">Currently routing traffic</div></div>
+                            <button onclick="addNewKey()" class="flex items-center gap-x-2 px-5 py-2 text-sm font-medium border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition-colors">
+                                <i class="fa-solid fa-plus"></i> <span>Add New Key</span>
+                            </button>
+                        </div>
+                        <table class="w-full text-sm">
+                            <thead><tr class="bg-zinc-950 text-zinc-400 text-xs uppercase tracking-wider">
+                                <th class="text-left px-7 py-4 font-normal">Key ID</th>
+                                <th class="text-left px-7 py-4 font-normal">Provider</th>
+                                <th class="text-left px-7 py-4 font-normal">Health</th>
+                                <th class="text-right px-7 py-4 font-normal">Tokens Used</th>
+                                <th class="text-right px-7 py-4 font-normal">Revenue (USDC)</th>
+                                <th class="text-center px-7 py-4 font-normal">Status</th>
+                            </tr></thead>
+                            <tbody id="keys-table-body" class="divide-y divide-zinc-800"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Collateral & Stake Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+                        <div class="lg:col-span-3 bg-zinc-900 border border-zinc-800 rounded-3xl p-7">
+                            <div class="flex justify-between items-center mb-5">
+                                <div><div class="font-semibold text-xl tracking-tight">Collateral</div><div class="text-xs text-zinc-400">Locked to guarantee service quality</div></div>
+                                <div class="text-right"><div class="text-3xl font-semibold tabular-nums">$5,000</div><div class="text-xs text-emerald-400">USDC</div></div>
+                            </div>
+                            <button onclick="stakeMoreCollateral()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-semibold text-sm flex items-center justify-center gap-x-2">
+                                <i class="fa-solid fa-plus"></i> <span>Stake Additional Collateral</span>
+                            </button>
+                        </div>
+                        
+                        <div class="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-3xl p-7 flex flex-col justify-center">
+                            <div class="text-sm text-zinc-400 mb-1">Success Rate (30 days)</div>
+                            <div class="flex items-baseline gap-x-2">
+                                <div class="text-6xl font-semibold tracking-tighter">96.8</div>
+                                <div class="text-emerald-400 text-2xl">%</div>
+                            </div>
+                            <div class="text-xs text-emerald-400 mt-1">+2.4% from last month</div>
+                        </div>
+                    </div>
+
+                    <!-- Bandwidth Chart -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-7">
+                        <div class="flex justify-between mb-5">
+                            <div><div class="font-semibold text-xl tracking-tight">Bandwidth Usage</div><div class="text-xs text-zinc-400">Last 30 minutes • Live</div></div>
+                            <div class="px-3 py-1 bg-zinc-800 rounded-2xl text-xs flex items-center gap-x-2 text-zinc-400"><div class="w-2 h-2 bg-violet-400 rounded-full animate-pulse"></div> LIVE</div>
+                        </div>
+                        <div class="h-[260px]"><canvas id="bandwidthChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock Data
+        let keysData = [
+            { id: "key_0x7f3a", provider: "OpenAI", health: 94, tokens: 1248000, revenue: 3120.45, status: "healthy" },
+            { id: "key_0x9c2b", provider: "Anthropic", health: 81, tokens: 987000, revenue: 2467.50, status: "healthy" },
+            { id: "key_0x4e1d", provider: "Groq", health: 67, tokens: 452000, revenue: 1130.00, status: "cooldown" },
+            { id: "key_0x2a8f", provider: "Local vLLM", health: 98, tokens: 2150000, revenue: 5375.00, status: "healthy" }
+        ];
+        
+        let totalEarned = 12847.32;
+        let currentBandwidth = 184.7;
+        let isWalletConnected = false;
+        let connectedAddress = null;
+        let currentNetwork = "Arbitrum";
+
+        // Render Keys Table
+        function renderKeysTable() {
+            const tbody = document.getElementById('keys-table-body');
+            tbody.innerHTML = '';
+            
+            keysData.forEach(key => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-zinc-800/50 transition-colors';
+                
+                const statusColor = key.status === 'healthy' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400';
+                const healthColor = key.health > 85 ? 'bg-emerald-500' : key.health > 70 ? 'bg-emerald-400' : 'bg-amber-400';
+                
+                row.innerHTML = `
+                    <td class="px-7 py-5 font-mono text-xs text-zinc-300">${key.id}</td>
+                    <td class="px-7 py-5 font-medium">${key.provider}</td>
+                    <td class="px-7 py-5">
+                        <div class="flex items-center gap-x-3">
+                            <div class="w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden"><div class="h-1.5 ${healthColor} health-bar" style="width: ${key.health}%"></div></div>
+                            <span class="font-mono text-xs tabular-nums w-8">${key.health}</span>
+                        </div>
+                    </td>
+                    <td class="px-7 py-5 text-right font-mono tabular-nums text-zinc-300">${(key.tokens / 1000).toFixed(0)}k</td>
+                    <td class="px-7 py-5 text-right font-mono text-emerald-400 font-medium">$${key.revenue.toFixed(2)}</td>
+                    <td class="px-7 py-5 text-center"><span class="status-pill ${statusColor}">${key.status}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Real-time updates
+        function startRealTimeSimulation() {
+            setInterval(() => {
+                currentBandwidth = Math.max(85, Math.min(295, currentBandwidth + (Math.random() - 0.48) * 18));
+                document.getElementById('bandwidth-value').textContent = currentBandwidth.toFixed(1);
+                const percent = Math.min(100, Math.round((currentBandwidth / 300) * 100));
+                document.getElementById('bandwidth-bar').style.width = percent + '%';
+
+                if (Math.random() > 0.65) {
+                    const idx = Math.floor(Math.random() * keysData.length);
+                    const key = keysData[idx];
+                    const added = Math.floor(Math.random() * 5800) + 2100;
+                    key.tokens += added;
+                    key.revenue = parseFloat((key.tokens * 0.0025).toFixed(2));
+                    totalEarned += added * 0.00075;
+                    document.getElementById('total-earned').textContent = '$' + totalEarned.toFixed(2);
+                    renderKeysTable();
+                }
+            }, 1850);
+        }
+
+        // Chart
+        let bandwidthChart;
+        function initBandwidthChart() {
+            const ctx = document.getElementById('bandwidthChart');
+            const labels = Array.from({length: 31}, (_, i) => `${30-i}m`);
+            const data = Array.from({length: 31}, () => Math.floor(Math.random() * 95) + 95);
+            
+            bandwidthChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Tokens/sec', data, borderColor: '#a78bfa', borderWidth: 3, tension: 0.35, fill: true, backgroundColor: 'rgba(167,139,250,0.08)', pointRadius: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#27251f' } }, y: { grid: { color: '#27251f' }, beginAtZero: true } } }
+            });
+            
+            setInterval(() => {
+                if (!bandwidthChart) return;
+                bandwidthChart.data.datasets[0].data.shift();
+                bandwidthChart.data.datasets[0].data.push(Math.floor(Math.random() * 105) + 95);
+                bandwidthChart.update('none');
+            }, 2400);
+        }
+
+        // Wallet Connection (MetaMask)
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert("MetaMask not detected. Please install MetaMask to connect your wallet.");
+                window.open('https://metamask.io/download/', '_blank');
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                connectedAddress = accounts[0];
+                isWalletConnected = true;
+
+                updateWalletUI();
+                
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                if (chainId === '0xa4b1') currentNetwork = 'Arbitrum';
+                else if (chainId === '0x2105') currentNetwork = 'Base';
+                else currentNetwork = 'Ethereum';
+
+                document.getElementById('sidebar-network').textContent = currentNetwork;
+                
+                window.ethereum.on('accountsChanged', handleAccountsChanged);
+                window.ethereum.on('chainChanged', () => window.location.reload());
+
+                showToast("Wallet connected successfully!");
+            } catch (error) {
+                console.error(error);
+                showToast("Connection failed. Please try again.");
+            }
+        }
+
+        function handleAccountsChanged(accounts) {
+            if (accounts.length === 0) {
+                disconnectWallet();
+            } else {
+                connectedAddress = accounts[0];
+                updateWalletUI();
+            }
+        }
+
+        function updateWalletUI() {
+            const connectBtnContainer = document.getElementById('wallet-section');
+            const sidebarAddr = document.getElementById('sidebar-address');
+            
+            if (isWalletConnected && connectedAddress) {
+                const shortAddr = connectedAddress.slice(0, 6) + '...' + connectedAddress.slice(-4);
+                
+                connectBtnContainer.innerHTML = `
+                    <div class="flex items-center gap-x-2 px-4 py-2 bg-emerald-900/30 border border-emerald-700 rounded-2xl text-sm">
+                        <div class="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                        <span class="font-mono text-emerald-400">${shortAddr}</span>
+                        <button onclick="disconnectWallet()" class="ml-2 text-emerald-400 hover:text-white"><i class="fa-solid fa-power-off"></i></button>
+                    </div>
+                `;
+                
+                sidebarAddr.innerHTML = `<span class="font-mono">${shortAddr}</span>`;
+                sidebarAddr.classList.add('text-emerald-400');
+            }
+        }
+
+        function disconnectWallet() {
+            isWalletConnected = false;
+            connectedAddress = null;
+            location.reload();
+        }
+
+        // Stake Collateral (simulated wallet tx)
+        async function stakeMoreCollateral() {
+            if (!isWalletConnected) {
+                alert("Please connect your wallet first to stake collateral.");
+                await connectWallet();
+                return;
+            }
+            
+            const amount = prompt("Enter amount to stake (USDC):", "1000");
+            if (!amount) return;
+            
+            showToast(`Staking ${amount} USDC... (simulating MetaMask tx)`);
+            
+            setTimeout(() => {
+                showToast(`Successfully staked ${amount} USDC! Transaction confirmed on Arbitrum.`);
+            }, 1800);
+        }
+
+        // Add new key
+        function addNewKey() {
+            const providers = ["OpenAI", "Anthropic", "Groq", "Local vLLM", "Together AI"];
+            const newKey = {
+                id: "key_" + Math.random().toString(16).slice(2, 9),
+                provider: providers[Math.floor(Math.random() * providers.length)],
+                health: 82 + Math.floor(Math.random() * 16),
+                tokens: 0,
+                revenue: 0,
+                status: "healthy"
+            };
+            keysData.unshift(newKey);
+            renderKeysTable();
+            showToast("New key added to pool!");
+        }
+
+        // Withdraw
+        async function withdrawFunds() {
+            if (!isWalletConnected) {
+                const proceed = confirm("Wallet not connected. Connect now to withdraw?");
+                if (proceed) await connectWallet();
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = `fixed inset-0 bg-black/70 flex items-center justify-center z-50`;
+            modal.innerHTML = `
+                <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-md w-full mx-4">
+                    <div class="text-center">
+                        <i class="fa-solid fa-wallet text-emerald-400 text-4xl mb-4"></i>
+                        <div class="text-2xl font-semibold tracking-tighter">Withdraw to Wallet</div>
+                        <div class="text-emerald-400 mt-1 text-xl font-mono">$${totalEarned.toFixed(2)} USDC</div>
+                        
+                        <div class="mt-6 text-sm text-zinc-400">Destination: <span class="font-mono text-white">${connectedAddress ? connectedAddress.slice(0,8)+'...'+connectedAddress.slice(-6) : 'your wallet'}</span><br>On Arbitrum • Gas: ~$0.12</div>
+                        
+                        <div class="flex gap-3 mt-8">
+                            <button onclick="this.closest('.fixed').remove()" class="flex-1 py-3.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl text-sm font-medium">Cancel</button>
+                            <button onclick="confirmWithdraw(this)" class="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-sm font-semibold text-white">Confirm & Send</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function confirmWithdraw(element) {
+            const modal = element.closest('.fixed');
+            element.innerHTML = `<span class="flex items-center justify-center gap-x-2"><i class="fa-solid fa-spinner fa-spin"></i> Broadcasting tx...</span>`;
+            element.disabled = true;
+            
+            setTimeout(() => {
+                modal.remove();
+                showToast(`Withdrawal of $${totalEarned.toFixed(2)} sent to your wallet!`);
+                totalEarned = 0;
+                document.getElementById('total-earned').textContent = '$0.00';
+            }, 2200);
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 right-6 px-6 py-3.5 bg-zinc-800 border border-zinc-700 rounded-2xl shadow-2xl flex items-center gap-x-3 text-sm z-[100]`;
+            toast.innerHTML = `<i class="fa-solid fa-check-circle text-emerald-400"></i> <span>${msg}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.transition = 'all .3s'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2600);
+        }
+
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key.toLowerCase() === 'a') { e.preventDefault(); addNewKey(); }
+                if (e.key === '/' && document.activeElement.tagName === 'BODY') { e.preventDefault(); showToast("Search feature coming soon in full app"); }
+            });
+        }
+
+        function initializeDashboard() {
+            renderKeysTable();
+            initBandwidthChart();
+            startRealTimeSimulation();
+            initKeyboardShortcuts();
+            
+            document.getElementById('total-earned').textContent = '$' + totalEarned.toFixed(2);
+            document.getElementById('bandwidth-value').textContent = currentBandwidth.toFixed(1);
+            
+            console.log('%c[ProxyMarket] Press "A" to add key • Connect MetaMask for full Web3 experience (withdraw, stake)', 'color:#3f3f46');
+        }
+
+        window.onload = initializeDashboard;
+    </script>
+</body>
+</html>
