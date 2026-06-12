@@ -30,4 +30,28 @@ A privacy-first, trust-minimized marketplace for AI inference.
 - `buyer-dashboard.html` — Buyer interface with escrow creation, prompt testing, and spending tracking
 - `README.md` — This file
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a pull request.
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold this code.
+
+## Security
+
+If you discover a security vulnerability, please review our [Security Policy](SECURITY.md) and report it responsibly.
+
+## Roadmap
+
+- Full proxy routing gateway implementation
+- TEE (Trusted Execution Environment) integration
+- On-chain settlement with real testnet deployment
+- Token incentives and governance
+- Partnerships with DePIN networks
+
 Built for a more open, private, and efficient AI future.
